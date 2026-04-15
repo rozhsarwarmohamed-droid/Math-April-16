@@ -1,0 +1,3097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Subtraction: Regrouping Tens</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --h-color: #3A86FF;
+  --h-dark: #2667CC;
+  --t-color: #FF006E;
+  --t-dark: #CC0058;
+  --o-color: #06D6A0;
+  --o-dark: #04A87D;
+  --accent: #FFBE0B;
+  --accent-dark: #E0A800;
+  --purple: #8338EC;
+  --purple-dark: #6020C0;
+  --bg: #FFF8F0;
+  --card: #FFFFFF;
+  --text: #1A1A2E;
+  --text-light: #555577;
+  --shadow: 0 8px 0px;
+  --radius: 20px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: none; }
+
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  user-select: none;
+}
+
+/* ── SLIDE WRAPPER ── */
+#app {
+  width: 100vw; height: 100vh;
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+}
+
+.slide {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 24px 90px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  gap: 14px;
+  background: var(--bg);
+}
+.slide.active { display: flex; }
+
+/* ── SLIDE HEADER ── */
+.slide-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.slide-num {
+  font-family: 'Fredoka One', cursive;
+  font-size: 14px;
+  background: var(--text);
+  color: #fff;
+  border-radius: 50px;
+  padding: 4px 14px;
+  white-space: nowrap;
+}
+.slide-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(26px, 5vw, 42px);
+  color: var(--text);
+  line-height: 1.1;
+  flex: 1;
+}
+.slide-title span { color: var(--purple); }
+
+/* ── VOCAB PILLS ── */
+.vocab-bar {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  width: 100%; flex-shrink: 0;
+}
+.vocab-pill {
+  font-size: 13px; font-weight: 800;
+  padding: 6px 16px;
+  border-radius: 50px;
+  background: var(--accent);
+  color: var(--text);
+  box-shadow: 0 4px 0 var(--accent-dark);
+}
+.vocab-pill.purple { background: var(--purple); color: #fff; box-shadow: 0 4px 0 var(--purple-dark); }
+.vocab-pill.blue { background: var(--h-color); color: #fff; box-shadow: 0 4px 0 var(--h-dark); }
+.vocab-pill.pink { background: var(--t-color); color: #fff; box-shadow: 0 4px 0 var(--t-dark); }
+.vocab-pill.green { background: var(--o-color); color: #fff; box-shadow: 0 4px 0 var(--o-dark); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  width: 100%;
+  box-shadow: 0 6px 0 #DDD, 0 0 0 3px #EEE;
+}
+.card-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 18px;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+
+/* ── BLOCKS ── */
+.block {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: 'Fredoka One', cursive;
+  border-radius: 12px;
+  cursor: grab;
+  transition: transform 0.1s;
+  position: relative;
+  flex-shrink: 0;
+}
+.block:active { cursor: grabbing; }
+.block.dragging-source { opacity: 0.3; }
+
+.block-h {
+  width: 80px; height: 80px;
+  background: var(--h-color);
+  color: #fff; font-size: 15px;
+  box-shadow: 0 6px 0 var(--h-dark);
+  border: 3px solid #fff;
+}
+.block-t {
+  width: 52px; height: 52px;
+  background: var(--t-color);
+  color: #fff; font-size: 12px;
+  box-shadow: 0 4px 0 var(--t-dark);
+  border: 3px solid #fff;
+}
+.block-o {
+  width: 38px; height: 38px;
+  background: var(--o-color);
+  color: #fff; font-size: 11px;
+  box-shadow: 0 3px 0 var(--o-dark);
+  border: 2px solid #fff;
+}
+
+/* ── GHOST (drag clone) ── */
+#ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.85;
+  transform: scale(1.1) rotate(-4deg);
+  display: none;
+}
+
+/* ── NAVIGATION ── */
+#nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 80px;
+  background: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 1000;
+}
+.nav-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px;
+  color: #fff;
+  background: #FFFFFF22;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 32px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex; align-items: center; gap: 10px;
+  min-width: 120px; justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 56px;
+}
+.nav-btn:active { background: #FFFFFF44; transform: scale(0.97); }
+.nav-btn:disabled { opacity: 0.3; pointer-events: none; }
+.nav-btn.next { background: var(--accent); color: var(--text); box-shadow: 0 4px 0 var(--accent-dark); }
+.nav-btn.next:active { transform: scale(0.97) translateY(2px); box-shadow: 0 2px 0 var(--accent-dark); }
+
+.dots {
+  display: flex; gap: 10px;
+}
+.dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #FFFFFF44;
+  transition: background 0.3s, transform 0.3s;
+}
+.dot.active { background: var(--accent); transform: scale(1.3); }
+
+/* ══════════════════════════════════════
+   SLIDE 1 — EXCHANGE IT
+══════════════════════════════════════ */
+#s1 .blocks-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 12px;
+}
+#s1 .block-group {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+}
+#s1 .block-group label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 13px;
+  color: var(--text-light);
+}
+#s1 .block-group .blocks-row {
+  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+}
+
+.exchange-zone {
+  border: 4px dashed var(--purple);
+  border-radius: 20px;
+  min-height: 100px;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: #F3EEFF;
+  transition: background 0.3s;
+}
+.exchange-zone.over { background: #E0D0FF; }
+.exchange-zone .zone-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  color: var(--purple);
+  text-align: center;
+}
+
+#s1 .equation-box {
+  background: var(--text);
+  color: #fff;
+  border-radius: 16px;
+  padding: 16px 28px;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(20px, 4vw, 32px);
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.eq-part {
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: clamp(16px, 3vw, 26px);
+}
+.eq-h { background: var(--h-color); }
+.eq-t { background: var(--t-color); }
+.eq-o { background: var(--o-color); }
+.eq-q { background: #FFBE0B; color: var(--text); min-width: 60px; text-align: center; }
+
+.reset-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  background: #EEE;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 28px;
+  cursor: pointer;
+  color: var(--text);
+  box-shadow: 0 4px 0 #CCC;
+  transition: all 0.15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 50px;
+}
+.reset-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #CCC; }
+
+/* ══════════════════════════════════════
+   SLIDE 2 — PLACE VALUE GRID
+══════════════════════════════════════ */
+.pv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid var(--text);
+  width: 100%;
+}
+.pv-col {
+  display: flex; flex-direction: column;
+  align-items: center;
+  border-right: 3px solid var(--text);
+  min-height: 140px;
+}
+.pv-col:last-child { border-right: none; }
+.pv-col-header {
+  width: 100%;
+  text-align: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: 18px;
+  padding: 10px 4px;
+  color: #fff;
+}
+.pv-col-header.h-hdr { background: var(--h-color); }
+.pv-col-header.t-hdr { background: var(--t-color); }
+.pv-col-header.o-hdr { background: var(--o-color); }
+.pv-dots {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 6px; padding: 10px 6px;
+  min-height: 90px; align-content: flex-start;
+}
+.pv-dot {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: 11px;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+  flex-shrink: 0;
+}
+.pv-dot:active { transform: scale(0.9); }
+.pv-dot.removed {
+  opacity: 0.15;
+  pointer-events: none;
+  transform: scale(0.7);
+}
+.pv-dot.h-dot { background: var(--h-color); }
+.pv-dot.t-dot { background: var(--t-color); }
+.pv-dot.o-dot { background: var(--o-color); }
+
+.pv-exchange-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 13px;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 8px 14px;
+  cursor: pointer;
+  margin: 6px;
+  box-shadow: 0 4px 0 var(--purple-dark);
+}
+.pv-exchange-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--purple-dark); }
+.pv-exchange-btn:disabled { opacity: 0.3; pointer-events: none; }
+
+.sub-guide {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px dashed var(--t-color);
+  width: 100%;
+}
+.sub-col {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 6px; gap: 6px;
+  border-right: 2px dashed var(--t-color);
+}
+.sub-col:last-child { border-right: none; }
+.sub-col .sub-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 13px;
+  color: var(--t-color);
+}
+.sub-counter {
+  font-family: 'Fredoka One', cursive;
+  font-size: 28px;
+  color: var(--text);
+}
+
+.s2-result {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(22px, 4vw, 36px);
+  text-align: center;
+  padding: 14px 24px;
+  background: var(--text);
+  color: #fff;
+  border-radius: 16px;
+  width: 100%;
+}
+.s2-result .answer { color: var(--accent); }
+
+/* ══════════════════════════════════════
+   SLIDE 3 — BUILD & SOLVE
+══════════════════════════════════════ */
+.problem-display {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(36px, 7vw, 60px);
+  text-align: center;
+  color: var(--text);
+  padding: 10px;
+}
+
+.col-subtraction {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0;
+  border: 3px solid var(--text);
+  border-radius: 16px;
+  overflow: hidden;
+  width: fit-content;
+  margin: 0 auto;
+  background: #fff;
+}
+.col-row {
+  display: flex;
+}
+.col-cell {
+  width: 64px; height: 64px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: 28px;
+  border-right: 2px solid #EEE;
+  border-bottom: 2px solid #EEE;
+}
+.col-cell:last-child { border-right: none; }
+.col-cell.header { background: #F5F5F5; font-size: 13px; color: var(--text-light); }
+.col-cell.operator { font-size: 32px; color: var(--t-color); border-right: none; }
+
+/* New CSS for proper 4-column layout */
+.col-cell.empty { border-bottom: 2px solid #EEE; border-right: none; background: #fff; }
+.col-row.regroup-row .col-cell { border-bottom: none; height: 50px; }
+.col-row:last-child .col-cell { border-bottom: none; }
+
+.col-cell input {
+  width: 100%; height: 100%;
+  border: none; outline: none;
+  font-family: 'Fredoka One', cursive;
+  font-size: 28px;
+  text-align: center;
+  background: transparent;
+  color: var(--purple);
+}
+
+.rg-input {
+  width: 44px !important; height: 44px !important;
+  border: 2px dashed #CCC !important; outline: none;
+  text-align: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px !important;
+  color: var(--t-color) !important;
+  background: #FFF !important;
+  border-radius: 8px;
+}
+.rg-input:focus { border-color: var(--purple) !important; background: #F3EEFF !important; }
+
+/* remove arrows for number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+.col-divider {
+  width: 100%;
+  height: 4px;
+  background: var(--text);
+}
+.col-row.answer-row .col-cell { background: #FFFBF0; }
+.col-row.answer-row .col-cell input { color: var(--o-dark); }
+
+.estimate-row {
+  display: flex; align-items: center; gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.estimate-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px;
+  color: var(--text-light);
+}
+.estimate-input {
+  font-family: 'Fredoka One', cursive;
+  font-size: 28px;
+  color: var(--text);
+  border: 3px solid var(--accent);
+  border-radius: 14px;
+  width: 130px; height: 60px;
+  text-align: center;
+  outline: none;
+  background: #FFFBF0;
+  box-shadow: 0 4px 0 var(--accent-dark);
+}
+
+.check-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px;
+  background: var(--o-color);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 40px;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--o-dark);
+  transition: all 0.15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 54px;
+}
+.check-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--o-dark); }
+
+.result-badge {
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px;
+  padding: 12px 28px;
+  border-radius: 50px;
+  display: none;
+  animation: pop 0.3s;
+  text-align: center;
+  width: 100%;
+  justify-content: center;
+}
+.result-badge.correct { background: var(--o-color); color: #fff; display: inline-flex; }
+.result-badge.wrong { background: var(--t-color); color: #fff; display: inline-flex; }
+
+/* ══════════════════════════════════════
+   SLIDE 4 — SMILEY MATH
+══════════════════════════════════════ */
+.smiley-equation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(32px, 6vw, 56px);
+}
+.smiley-box {
+  width: 90px; height: 90px;
+  border: 5px dashed var(--accent);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 50px;
+  background: #FFFBF0;
+  position: relative;
+  transition: border-color 0.3s, background 0.3s;
+}
+.smiley-box.has-value {
+  border-color: var(--purple);
+  background: #F3EEFF;
+}
+.smiley-box .current-val {
+  font-family: 'Fredoka One', cursive;
+  font-size: 32px;
+  color: var(--purple);
+}
+.smiley-hint {
+  font-size: 14px;
+  color: var(--text-light);
+  text-align: center;
+  font-weight: 700;
+}
+
+.number-bank {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+.num-tile {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(20px, 4vw, 32px);
+  background: var(--h-color);
+  color: #fff;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--h-dark);
+  transition: all 0.15s;
+  min-height: 60px;
+}
+.num-tile:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--h-dark); }
+.num-tile.selected { background: var(--purple); box-shadow: 0 5px 0 var(--purple-dark); }
+
+.trial-display {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(18px, 3.5vw, 28px);
+  text-align: center;
+  padding: 14px 20px;
+  border-radius: 16px;
+  width: 100%;
+  min-height: 60px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px;
+}
+.trial-display.empty { background: #F5F5F5; color: var(--text-light); }
+.trial-display.too-big { background: #FFE0EC; color: var(--t-color); }
+.trial-display.too-small { background: #E0F9F0; color: var(--o-dark); }
+.trial-display.correct { background: #FFFDE7; color: #E65100; }
+
+.build-number-area {
+  display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap;
+}
+.digit-slot {
+  width: 64px; height: 80px;
+  border: 4px solid var(--accent);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: 38px;
+  color: var(--purple);
+  background: #FFFBF0;
+  cursor: pointer;
+  position: relative;
+}
+.digit-slot.active-slot { border-color: var(--purple); background: #F3EEFF; box-shadow: 0 0 0 3px var(--purple); }
+.digit-slot.filled { border-color: var(--purple); }
+.digit-slot .slot-label {
+  position: absolute;
+  bottom: -22px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+.s4-numpad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+.s4-numpad .num-tile { min-height: 54px; font-size: clamp(18px, 3.5vw, 28px); }
+.clear-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  background: var(--t-color);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--t-dark);
+}
+.clear-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--t-dark); }
+
+/* ══════════════════════════════════════
+   SLIDE 5 — THINK LIKE A MATHEMATICIAN
+══════════════════════════════════════ */
+.puzzle-equation {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; flex-wrap: wrap;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(28px, 5.5vw, 50px);
+  color: var(--text);
+}
+.shape-slot {
+  width: 72px; height: 72px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 14px;
+  font-size: clamp(26px, 5vw, 40px);
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.1s;
+  flex-shrink: 0;
+}
+.triangle-slot {
+  background: var(--accent);
+  color: var(--text);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  border-radius: 0;
+  width: 80px; height: 72px;
+}
+.square-slot {
+  border: 5px solid var(--text);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+}
+.shape-slot.active-slot { transform: scale(1.1); filter: brightness(1.1); box-shadow: 0 0 0 4px var(--purple); border-radius: 10px; }
+.shape-slot .slot-digit {
+  position: absolute;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(22px, 4vw, 34px);
+  color: var(--text);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
+.triangle-slot .slot-digit { top: 58%; }
+
+.s5-numpad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+.s5-numpad .num-tile {
+  background: var(--purple);
+  box-shadow: 0 5px 0 var(--purple-dark);
+  min-height: 60px;
+  font-size: clamp(20px, 4vw, 32px);
+}
+.s5-numpad .num-tile:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--purple-dark); }
+.s5-numpad .num-tile.used { opacity: 0.35; }
+
+.puzzle-result {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(16px, 3vw, 24px);
+  text-align: center;
+  padding: 12px 20px;
+  border-radius: 14px;
+  width: 100%;
+  min-height: 54px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px;
+}
+.puzzle-result.empty { background: #F5F5F5; color: #AAA; }
+.puzzle-result.wrong { background: #FFE0EC; color: var(--t-color); }
+.puzzle-result.correct { background: #E0F9F0; color: var(--o-dark); }
+
+.s5-hint {
+  font-size: 13px; font-weight: 700;
+  color: var(--text-light);
+  text-align: center;
+  padding: 6px 14px;
+  background: #F5F5F5;
+  border-radius: 10px;
+}
+
+/* ══════════════════════════════════════
+   SHARED UTILITY
+══════════════════════════════════════ */
+.flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
+.flex-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.w100 { width: 100%; }
+.center { text-align: center; justify-content: center; }
+
+.arrow-big {
+  font-size: 36px;
+  color: var(--purple);
+  animation: bounce-down 1.2s infinite;
+}
+@keyframes bounce-down {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+@keyframes pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes wiggle {
+  0%,100% { transform: rotate(0); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+
+.celebrate { animation: pop 0.4s ease-out, wiggle 0.5s 0.4s; }
+
+.info-box {
+  background: linear-gradient(135deg, #F3EEFF 0%, #EEF6FF 100%);
+  border-left: 5px solid var(--purple);
+  border-radius: 0 16px 16px 0;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  width: 100%;
+}
+
+/* Scrollbar */
+.slide::-webkit-scrollbar { width: 6px; }
+.slide::-webkit-scrollbar-track { background: transparent; }
+.slide::-webkit-scrollbar-thumb { background: #DDD; border-radius: 3px; }
+
+/* ══════════════════════════════════════
+   INTRO SLIDE
+══════════════════════════════════════ */
+#s0 {
+  background: linear-gradient(160deg, #1A1A2E 0%, #2A2A5E 50%, #1A1A2E 100%);
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  padding: 24px 28px 100px;
+}
+.intro-logo-row {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 28px;
+}
+.intro-cambridge-badge {
+  background: var(--accent);
+  color: var(--text);
+  font-family: 'Fredoka One', cursive;
+  font-size: 13px;
+  padding: 6px 18px;
+  border-radius: 50px;
+  box-shadow: 0 4px 0 var(--accent-dark);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.intro-grade-badge {
+  background: var(--purple);
+  color: #fff;
+  font-family: 'Fredoka One', cursive;
+  font-size: 13px;
+  padding: 6px 18px;
+  border-radius: 50px;
+  box-shadow: 0 4px 0 var(--purple-dark);
+  white-space: nowrap;
+}
+.intro-unit-tag {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(15px, 3vw, 20px);
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.intro-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(52px, 12vw, 96px);
+  color: #fff;
+  text-align: center;
+  line-height: 1;
+  margin-bottom: 8px;
+  text-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.intro-title span { color: var(--accent); }
+.intro-subtitle {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(18px, 3.5vw, 28px);
+  color: rgba(255,255,255,0.65);
+  text-align: center;
+  margin-bottom: 40px;
+}
+.intro-pages-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 44px;
+}
+.intro-pages-pill {
+  background: rgba(255,255,255,0.12);
+  border: 2px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  padding: 8px 20px;
+  border-radius: 50px;
+}
+.intro-topics {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+.intro-topic-chip {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 8px 18px;
+  border-radius: 50px;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.85);
+  border: 1.5px solid rgba(255,255,255,0.2);
+}
+.intro-start-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 22px;
+  background: var(--accent);
+  color: var(--text);
+  border: none;
+  border-radius: 50px;
+  padding: 18px 60px;
+  cursor: pointer;
+  box-shadow: 0 8px 0 var(--accent-dark);
+  transition: all 0.15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.intro-start-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--accent-dark); }
+.intro-deco {
+  position: absolute;
+  font-size: 80px;
+  opacity: 0.06;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ══════════════════════════════════════
+   SLIDE 1 — EXAMPLE SWITCHER
+══════════════════════════════════════ */
+.example-switcher {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  width: 100%;
+}
+.example-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 17px;
+  padding: 12px 22px;
+  border-radius: 50px;
+  border: 3px solid transparent;
+  background: #EEE;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: 0 4px 0 #CCC;
+  transition: all 0.15s;
+  touch-action: manipulation;
+  min-height: 50px;
+  -webkit-tap-highlight-color: transparent;
+}
+.example-btn.active {
+  background: var(--purple);
+  color: #fff;
+  box-shadow: 0 4px 0 var(--purple-dark);
+  border-color: transparent;
+}
+.example-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #AAA; }
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="ghost"></div>
+
+  <!-- ════ INTRO SLIDE ════ -->
+  <div class="slide active" id="s0">
+    <div class="intro-deco" style="top:4%;left:-2%">➗</div>
+    <div class="intro-deco" style="bottom:10%;right:-1%">🔢</div>
+    <div class="intro-deco" style="top:30%;right:2%">✖️</div>
+
+    <div class="intro-logo-row">
+      <div class="intro-cambridge-badge">📚 Cambridge Primary Mathematics</div>
+      <div class="intro-grade-badge">Grade 3</div>
+    </div>
+
+    <div class="intro-unit-tag">Unit 9.2</div>
+    <div class="intro-title">Sub<span>traction</span></div>
+    <div class="intro-subtitle">Regrouping Hundreds &amp; Tens</div>
+
+    <div class="intro-pages-row">
+      <div class="intro-pages-pill">📖 Pages 140 – 143</div>
+    </div>
+
+    <div class="intro-topics">
+      <div class="intro-topic-chip">🔄 Exchange 100 → 10 tens</div>
+      <div class="intro-topic-chip">🧮 Place Value Grid</div>
+      <div class="intro-topic-chip">📐 Column Subtraction</div>
+      <div class="intro-topic-chip">🔍 Missing Numbers</div>
+      <div class="intro-topic-chip">🧠 Mathematician Thinking</div>
+    </div>
+
+    <button class="intro-start-btn" onclick="navigate(1)">Let's Start! 🚀</button>
+  </div>
+
+  <div class="slide" id="s1">
+    <div class="slide-header">
+      <div class="slide-num">1 of 5</div>
+      <div class="slide-title">Exchange <span>It!</span> 🔄</div>
+    </div>
+
+    <div class="vocab-bar">
+      <div class="vocab-pill purple">Exchange</div>
+      <div class="vocab-pill">Regroup</div>
+      <div class="vocab-pill blue">100</div>
+      <div class="vocab-pill pink">10s</div>
+    </div>
+
+    <div class="info-box">
+      1 hundred = 10 tens &nbsp;|&nbsp; Drag a <strong style="color:var(--h-color)">100</strong> block into the zone ⬇
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="s1-card-title">235 shown as blocks</div>
+      <div class="blocks-area" id="s1-blocks-area">
+
+        <div class="block-group">
+          <label style="color:var(--h-color)">Hundreds</label>
+          <div class="blocks-row" id="h-bank">
+            <div class="block block-h" id="h1" data-type="hundred">100</div>
+            <div class="block block-h" id="h2" data-type="hundred">100</div>
+          </div>
+        </div>
+
+        <div class="block-group">
+          <label style="color:var(--t-color)">Tens</label>
+          <div class="blocks-row" id="t-bank">
+            <div class="block block-t">10</div>
+            <div class="block block-t">10</div>
+            <div class="block block-t">10</div>
+          </div>
+        </div>
+
+        <div class="block-group">
+          <label style="color:var(--o-color)">Ones</label>
+          <div class="blocks-row" id="o-bank">
+            <div class="block block-o">1</div>
+            <div class="block block-o">1</div>
+            <div class="block block-o">1</div>
+            <div class="block block-o">1</div>
+            <div class="block block-o">1</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="flex-col w100">
+      <div class="arrow-big">↓</div>
+      <div class="exchange-zone" id="exchange-zone">
+        <div class="zone-label">🟣 Exchange Zone<br><small>Drop a 100 here</small></div>
+        <div class="blocks-row" id="exchanged-tens" style="gap:4px;flex-wrap:wrap;justify-content:center;"></div>
+      </div>
+    </div>
+
+    <div id="s1-equation" class="s1-equation-box" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;padding:10px;">
+      <div id="eq-label" style="font-family:'Fredoka One',cursive;font-size:clamp(24px,4.5vw,38px);color:var(--text);">235 =</div>
+      <div class="eq-part eq-h" id="eq-h">100 + 100</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;">+</div>
+      <div class="eq-part eq-t" id="eq-t">30</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:28px;">+</div>
+      <div class="eq-part eq-o" id="eq-o">5</div>
+    </div>
+
+    <!-- Example switcher -->
+    <div class="card" style="padding:14px 16px;">
+      <div class="card-title" style="margin-bottom:10px;">🔁 Try another number!</div>
+      <div class="example-switcher">
+        <button class="example-btn active" id="ex-btn-0" onclick="loadS1Example(0)">235</button>
+        <button class="example-btn" id="ex-btn-1" onclick="loadS1Example(1)">452</button>
+        <button class="example-btn" id="ex-btn-2" onclick="loadS1Example(2)">763</button>
+        <button class="example-btn" id="ex-btn-3" onclick="loadS1Example(3)">309</button>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetSlide1()">🔄 Reset</button>
+  </div>
+
+
+  <div class="slide" id="s2" style="padding-bottom:90px;">
+    <div class="slide-header" style="flex-shrink:0;">
+      <div class="slide-num">2 of 5</div>
+      <div class="slide-title">Subtraction <span>Game!</span> 🎮</div>
+    </div>
+    <iframe
+      srcdoc="&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, user-scalable=no&quot;&gt;
+    &lt;title&gt;Place Value Subtraction Game&lt;/title&gt;
+    &lt;link href=&quot;https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;
+    &lt;!-- Load anime.js from CDN --&gt;
+    &lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js&quot;&gt;&lt;/script&gt;
+
+    &lt;style&gt;
+        :root {
+            --c-100: #1E88E5; /* Montessori Blue */
+            --c-10: #E53935;  /* Montessori Red */
+            --c-1: #43A047;   /* Montessori Green */
+            --bg-color: #FFF8F0;
+            --text-dark: #1A1A2E;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: &#x27;Nunito&#x27;, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 950px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .problem-selector {
+            font-size: 1.1rem;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            outline: none;
+            cursor: pointer;
+            background: #fff;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .problem-selector:focus {
+            border-color: var(--c-100);
+        }
+
+        .target-equation {
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        .instructions {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        /* Game Board */
+        #game-board {
+            position: relative;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            touch-action: none; /* Prevents scroll when dragging on mobile */
+        }
+
+        svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 600px;
+        }
+
+        /* SVG Text that shouldn&#x27;t catch mouse events */
+        svg text {
+            pointer-events: none;
+        }
+
+        .dot {
+            cursor: pointer;
+            transition: stroke-width 0.2s;
+        }
+
+        .dot:hover {
+            stroke-width: 3;
+            stroke: #333;
+        }
+
+        .dot.dragging {
+            stroke-width: 4;
+            stroke: #1A1A2E;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            background: var(--text-dark);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -120%);
+            transition: opacity 0.2s ease;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            width:max-content;
+            max-width: 250px;
+        }
+        
+        .tooltip::after {
+            content: &#x27;&#x27;;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: var(--text-dark) transparent transparent transparent;
+        }
+
+        /* Win Overlay */
+        #win-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .win-text {
+            font-size: 5rem;
+            font-weight: 900;
+            color: var(--text-dark);
+            text-shadow: 0 4px 20px rgba(255,255,255,0.8);
+            opacity: 0;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;div id=&quot;app&quot;&gt;
+    &lt;div class=&quot;top-bar&quot;&gt;
+        &lt;select id=&quot;problem-select&quot; class=&quot;problem-selector&quot;&gt;&lt;/select&gt;
+        &lt;div id=&quot;target-equation&quot; class=&quot;target-equation&quot;&gt;Solve: ---&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;instructions&quot;&gt;
+        👉 &lt;strong&gt;Click&lt;/strong&gt; dots to subtract them. &lt;strong&gt;Drag&lt;/strong&gt; right to regroup (borrow)!
+    &lt;/div&gt;
+
+    &lt;div id=&quot;game-board&quot;&gt;
+        &lt;svg id=&quot;board&quot; viewBox=&quot;0 0 900 600&quot;&gt;
+            &lt;!-- Column Backgrounds --&gt;
+            &lt;rect x=&quot;0&quot; y=&quot;0&quot; width=&quot;300&quot; height=&quot;600&quot; fill=&quot;#E3F2FD&quot; opacity=&quot;0.4&quot;/&gt;
+            &lt;rect x=&quot;300&quot; y=&quot;0&quot; width=&quot;300&quot; height=&quot;600&quot; fill=&quot;#FFEBEE&quot; opacity=&quot;0.4&quot;/&gt;
+            &lt;rect x=&quot;600&quot; y=&quot;0&quot; width=&quot;300&quot; height=&quot;600&quot; fill=&quot;#E8F5E9&quot; opacity=&quot;0.4&quot;/&gt;
+
+            &lt;!-- Headers --&gt;
+            &lt;text x=&quot;150&quot; y=&quot;45&quot; text-anchor=&quot;middle&quot; font-size=&quot;28&quot; font-weight=&quot;900&quot; fill=&quot;var(--c-100)&quot;&gt;Hundreds&lt;/text&gt;
+            &lt;text x=&quot;450&quot; y=&quot;45&quot; text-anchor=&quot;middle&quot; font-size=&quot;28&quot; font-weight=&quot;900&quot; fill=&quot;var(--c-10)&quot;&gt;Tens&lt;/text&gt;
+            &lt;text x=&quot;750&quot; y=&quot;45&quot; text-anchor=&quot;middle&quot; font-size=&quot;28&quot; font-weight=&quot;900&quot; fill=&quot;var(--c-1)&quot;&gt;Ones&lt;/text&gt;
+
+            &lt;!-- Dividers --&gt;
+            &lt;line x1=&quot;300&quot; y1=&quot;0&quot; x2=&quot;300&quot; y2=&quot;600&quot; stroke=&quot;#ccc&quot; stroke-width=&quot;2&quot; stroke-dasharray=&quot;8 4&quot;/&gt;
+            &lt;line x1=&quot;600&quot; y1=&quot;0&quot; x2=&quot;600&quot; y2=&quot;600&quot; stroke=&quot;#ccc&quot; stroke-width=&quot;2&quot; stroke-dasharray=&quot;8 4&quot;/&gt;
+
+            &lt;!-- Requirement Footer Track --&gt;
+            &lt;rect x=&quot;0&quot; y=&quot;520&quot; width=&quot;900&quot; height=&quot;80&quot; fill=&quot;rgba(255,255,255,0.8)&quot;/&gt;
+            &lt;line x1=&quot;0&quot; y1=&quot;520&quot; x2=&quot;900&quot; y2=&quot;520&quot; stroke=&quot;#ddd&quot; stroke-width=&quot;2&quot;/&gt;
+            
+            &lt;text id=&quot;req-100&quot; x=&quot;150&quot; y=&quot;565&quot; text-anchor=&quot;middle&quot; font-size=&quot;20&quot; font-weight=&quot;800&quot; fill=&quot;#666&quot;&gt;&lt;/text&gt;
+            &lt;text id=&quot;req-10&quot; x=&quot;450&quot; y=&quot;565&quot; text-anchor=&quot;middle&quot; font-size=&quot;20&quot; font-weight=&quot;800&quot; fill=&quot;#666&quot;&gt;&lt;/text&gt;
+            &lt;text id=&quot;req-1&quot; x=&quot;750&quot; y=&quot;565&quot; text-anchor=&quot;middle&quot; font-size=&quot;20&quot; font-weight=&quot;800&quot; fill=&quot;#666&quot;&gt;&lt;/text&gt;
+
+            &lt;!-- Dots Layer --&gt;
+            &lt;g id=&quot;dots-layer&quot;&gt;&lt;/g&gt;
+        &lt;/svg&gt;
+
+        &lt;div id=&quot;win-overlay&quot;&gt;
+            &lt;div id=&quot;win-text&quot; class=&quot;win-text&quot;&gt;&lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div id=&quot;tooltip&quot; class=&quot;tooltip&quot;&gt;&lt;/div&gt;
+
+&lt;script&gt;
+    // --- Data &amp; Configuration ---
+    const problems = [
+        { label: &quot;246 - 84 (Tutorial)&quot;, start: [2, 4, 6], sub: [0, 8, 4] },
+        { label: &quot;342 - 158 (Double Regrouping)&quot;, start: [3, 4, 2], sub: [1, 5, 8] },
+        { label: &quot;503 - 265 (Subtracting across Zero)&quot;, start: [5, 0, 3], sub: [2, 6, 5] },
+        { label: &quot;72 - 38 (Simple Tens Regrouping)&quot;, start: [0, 7, 2], sub: [0, 3, 8] },
+        { label: &quot;450 - 175 (Regrouping with Zero Ones)&quot;, start: [4, 5, 0], sub: [1, 7, 5] },
+        { label: &quot;900 - 432 (Regroup across Double Zeros)&quot;, start: [9, 0, 0], sub: [4, 3, 2] },
+        { label: &quot;621 - 45 (Regrouping Tens only)&quot;, start: [6, 2, 1], sub: [0, 4, 5] }
+    ];
+
+    const TYPE_100 = 0, TYPE_10 = 1, TYPE_1 = 2;
+    const colors = {
+        [TYPE_100]: &#x27;#1E88E5&#x27;,
+        [TYPE_10]: &#x27;#E53935&#x27;,
+        [TYPE_1]: &#x27;#43A047&#x27;
+    };
+    const colNames = { [TYPE_100]: &#x27;Hundreds&#x27;, [TYPE_10]: &#x27;Tens&#x27;, [TYPE_1]: &#x27;Ones&#x27; };
+
+    let currentProblemIndex = 0;
+    let currProb = null;
+    let dots = [];
+    let removedCounts = { [TYPE_100]: 0, [TYPE_10]: 0, [TYPE_1]: 0 };
+    let gameWon = false;
+
+    // --- DOM Elements ---
+    const selectEl = document.getElementById(&#x27;problem-select&#x27;);
+    const eqEl = document.getElementById(&#x27;target-equation&#x27;);
+    const board = document.getElementById(&#x27;board&#x27;);
+    const dotsLayer = document.getElementById(&#x27;dots-layer&#x27;);
+    const tooltip = document.getElementById(&#x27;tooltip&#x27;);
+    const winText = document.getElementById(&#x27;win-text&#x27;);
+
+    let tooltipTimeout;
+
+    // --- Initialization ---
+    function init() {
+        // Populate dropdown
+        problems.forEach((p, idx) =&gt; {
+            let opt = document.createElement(&#x27;option&#x27;);
+            opt.value = idx;
+            opt.textContent = p.label;
+            selectEl.appendChild(opt);
+        });
+
+        selectEl.addEventListener(&#x27;change&#x27;, (e) =&gt; {
+            loadProblem(e.target.value);
+        });
+
+        // Setup Drag/Drop Listeners
+        setupInteraction();
+        loadProblem(0);
+    }
+
+    function loadProblem(idx) {
+        currentProblemIndex = idx;
+        currProb = problems[idx];
+        gameWon = false;
+        dots = [];
+        removedCounts = { [TYPE_100]: 0, [TYPE_10]: 0, [TYPE_1]: 0 };
+        dotsLayer.innerHTML = &#x27;&#x27;;
+        winText.style.opacity = &#x27;0&#x27;;
+        winText.textContent = &#x27;&#x27;;
+
+        // Display Equation
+        let startNum = currProb.start[0]*100 + currProb.start[1]*10 + currProb.start[2];
+        let subNum = currProb.sub[0]*100 + currProb.sub[1]*10 + currProb.sub[2];
+        eqEl.textContent = `Solve: ${startNum} − ${subNum}`;
+
+        // Spawn Initial Dots
+        spawnDots(TYPE_100, currProb.start[0], 150, -50);
+        spawnDots(TYPE_10, currProb.start[1], 450, -50);
+        spawnDots(TYPE_1, currProb.start[2], 750, -50);
+
+        updateUI();
+        layoutDots(true); // Animate in
+    }
+
+    // --- Logic Engine &amp; Rendering ---
+    function spawnDots(type, count, startX, startY) {
+        for (let i = 0; i &lt; count; i++) {
+            let circle = document.createElementNS(&quot;http://www.w3.org/2000/svg&quot;, &quot;circle&quot;);
+            circle.setAttribute(&quot;r&quot;, &quot;16&quot;);
+            circle.setAttribute(&quot;fill&quot;, colors[type]);
+            circle.setAttribute(&quot;cx&quot;, startX);
+            circle.setAttribute(&quot;cy&quot;, startY);
+            circle.classList.add(&#x27;dot&#x27;);
+            
+            dotsLayer.appendChild(circle);
+
+            dots.push({
+                el: circle,
+                type: type,
+                active: true
+            });
+        }
+    }
+
+    function layoutDots(animate = false) {
+        // Recalculates grid positions for active dots
+        [TYPE_100, TYPE_10, TYPE_1].forEach(type =&gt; {
+            let activeDots = dots.filter(d =&gt; d.type === type &amp;&amp; d.active);
+            activeDots.forEach((dot, index) =&gt; {
+                const cols = 5; // 5 columns grid per section
+                const row = Math.floor(index / cols);
+                const col = index % cols;
+                
+                // Base X offset for the section + padding + grid layout
+                const targetX = (type * 300) + 50 + (col * 50);
+                const targetY = 85 + (row * 45);
+
+                if (animate) {
+                    anime({
+                        targets: dot.el,
+                        cx: targetX,
+                        cy: targetY,
+                        duration: 600,
+                        easing: &#x27;easeOutElastic(1, .8)&#x27;
+                    });
+                } else {
+                    dot.el.setAttribute(&#x27;cx&#x27;, targetX);
+                    dot.el.setAttribute(&#x27;cy&#x27;, targetY);
+                }
+            });
+        });
+    }
+
+    function updateUI() {
+        [TYPE_100, TYPE_10, TYPE_1].forEach(type =&gt; {
+            let reqEl = document.getElementById(`req-${type === 0 ? &#x27;100&#x27; : type === 1 ? &#x27;10&#x27; : &#x27;1&#x27;}`);
+            let target = currProb.sub[type];
+            let removed = removedCounts[type];
+            let stillNeeded = target - removed;
+
+            if (target === 0) {
+                reqEl.textContent = `Need: 0`;
+                reqEl.setAttribute(&#x27;fill&#x27;, &#x27;#bbb&#x27;);
+            } else if (stillNeeded &lt;= 0) {
+                reqEl.textContent = `Done ✅`;
+                reqEl.setAttribute(&#x27;fill&#x27;, &#x27;#43A047&#x27;);
+            } else {
+                reqEl.textContent = `Subtract: ${stillNeeded} left`;
+                reqEl.setAttribute(&#x27;fill&#x27;, &#x27;#E53935&#x27;);
+            }
+        });
+    }
+
+    // --- Interaction Core ---
+    let selectedDot = null;
+    let dragStartPos = { x: 0, y: 0 };
+    let dotStartPos = { x: 0, y: 0 };
+    let isDragging = false;
+
+    function getMousePos(evt) {
+        let CTM = board.getScreenCTM();
+        let clientX = evt.clientX;
+        let clientY = evt.clientY;
+        if (evt.touches &amp;&amp; evt.touches.length &gt; 0) {
+            clientX = evt.touches[0].clientX;
+            clientY = evt.touches[0].clientY;
+        }
+        return {
+            x: (clientX - CTM.e) / CTM.a,
+            y: (clientY - CTM.f) / CTM.d
+        };
+    }
+
+    function setupInteraction() {
+        const startEvents = [&#x27;mousedown&#x27;, &#x27;touchstart&#x27;];
+        const moveEvents = [&#x27;mousemove&#x27;, &#x27;touchmove&#x27;];
+        const endEvents = [&#x27;mouseup&#x27;, &#x27;touchend&#x27;, &#x27;mouseleave&#x27;, &#x27;touchcancel&#x27;];
+
+        startEvents.forEach(evt =&gt; board.addEventListener(evt, startDrag, {passive: false}));
+        moveEvents.forEach(evt =&gt; board.addEventListener(evt, drag, {passive: false}));
+        endEvents.forEach(evt =&gt; board.addEventListener(evt, endDrag));
+    }
+
+    function startDrag(e) {
+        if (gameWon) return;
+        if (e.target.classList.contains(&#x27;dot&#x27;)) {
+            e.preventDefault();
+            let dotObj = dots.find(d =&gt; d.el === e.target);
+            if (!dotObj || !dotObj.active) return;
+
+            selectedDot = dotObj;
+            let mPos = getMousePos(e);
+            dragStartPos = mPos;
+            dotStartPos = {
+                x: parseFloat(selectedDot.el.getAttribute(&#x27;cx&#x27;)),
+                y: parseFloat(selectedDot.el.getAttribute(&#x27;cy&#x27;))
+            };
+            isDragging = true;
+            
+            // Bring to front
+            selectedDot.el.parentNode.appendChild(selectedDot.el);
+            selectedDot.el.classList.add(&#x27;dragging&#x27;);
+        }
+    }
+
+    function drag(e) {
+        if (isDragging &amp;&amp; selectedDot) {
+            e.preventDefault();
+            let mPos = getMousePos(e);
+            let dx = mPos.x - dragStartPos.x;
+            let dy = mPos.y - dragStartPos.y;
+            
+            selectedDot.el.setAttribute(&#x27;cx&#x27;, dotStartPos.x + dx);
+            selectedDot.el.setAttribute(&#x27;cy&#x27;, dotStartPos.y + dy);
+        }
+    }
+
+    function endDrag(e) {
+        if (!selectedDot) return;
+        
+        selectedDot.el.classList.remove(&#x27;dragging&#x27;);
+        
+        let mPos = getMousePos(e.type.includes(&#x27;leave&#x27;) || e.type.includes(&#x27;cancel&#x27;) ? {clientX: dragStartPos.x, clientY: dragStartPos.y} : e);
+        // Calculate total distance dragged
+        let dx = parseFloat(selectedDot.el.getAttribute(&#x27;cx&#x27;)) - dotStartPos.x;
+        let dy = parseFloat(selectedDot.el.getAttribute(&#x27;cy&#x27;)) - dotStartPos.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+
+        if (dist &lt; 8) {
+            // It&#x27;s a CLICK (Attempt Subtract)
+            attemptSubtract(selectedDot, e);
+        } else {
+            // It&#x27;s a DRAG (Attempt Regroup)
+            attemptRegroup(selectedDot);
+        }
+
+        selectedDot = null;
+        isDragging = false;
+    }
+
+    function showTooltip(msg, eventOrX, yFallback = null) {
+        tooltip.textContent = msg;
+        tooltip.style.opacity = &#x27;1&#x27;;
+        
+        let x, y;
+        if (eventOrX &amp;&amp; eventOrX.clientX) {
+            // Used native mouse event
+            x = eventOrX.clientX;
+            y = eventOrX.touches ? eventOrX.touches[0].clientY : eventOrX.clientY;
+        } else if (typeof eventOrX === &#x27;number&#x27;) {
+            // Rough estimate mapping SVG to screen
+            let CTM = board.getScreenCTM();
+            x = eventOrX * CTM.a + CTM.e;
+            y = yFallback * CTM.d + CTM.f;
+        } else {
+            x = window.innerWidth / 2;
+            y = window.innerHeight / 2;
+        }
+
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y - 15}px`;
+
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = setTimeout(() =&gt; { tooltip.style.opacity = &#x27;0&#x27;; }, 2500);
+    }
+
+    // --- Game Rules &amp; Mechanics ---
+    function attemptSubtract(dot, event) {
+        let type = dot.type;
+        let targetNeeded = currProb.sub[type];
+        let currentlyRemoved = removedCounts[type];
+        let stillNeeded = targetNeeded - currentlyRemoved;
+        
+        // Count active available for this specific column right now
+        let available = dots.filter(d =&gt; d.type === type &amp;&amp; d.active).length;
+
+        if (stillNeeded &lt;= 0) {
+            showTooltip(`Already removed enough ${colNames[type]}!`, event);
+            layoutDots(true); // Snap back
+            return;
+        }
+
+        // The Constraint Logic: Block if they don&#x27;t have enough to fulfill the whole requirement
+        if (available &lt; stillNeeded) {
+            let borrowFrom = type === TYPE_1 ? &#x27;Tens&#x27; : &#x27;Hundreds&#x27;;
+            showTooltip(`Not enough! Borrow from the ${borrowFrom}.`, event);
+            layoutDots(true); // Snap back
+            return;
+        }
+
+        // Valid Subtraction
+        dot.active = false;
+        removedCounts[type]++;
+        updateUI();
+
+        // Subtraction Animation (shrink and fall)
+        anime({
+            targets: dot.el,
+            cy: 700,
+            opacity: 0,
+            scale: 0.5,
+            duration: 800,
+            easing: &#x27;easeInQuad&#x27;,
+            complete: () =&gt; dot.el.remove()
+        });
+
+        checkWin();
+    }
+
+    function attemptRegroup(dot) {
+        let cx = parseFloat(dot.el.getAttribute(&#x27;cx&#x27;));
+        let cy = parseFloat(dot.el.getAttribute(&#x27;cy&#x27;));
+        
+        // Regroup Hundreds to Tens
+        if (dot.type === TYPE_100 &amp;&amp; cx &gt; 300 &amp;&amp; cx &lt; 600) {
+            executeRegroup(dot, TYPE_10, cx, cy);
+        }
+        // Regroup Tens to Ones
+        else if (dot.type === TYPE_10 &amp;&amp; cx &gt; 600) {
+            executeRegroup(dot, TYPE_1, cx, cy);
+        } 
+        else {
+            // Invalid drop zone -&gt; snap back
+            layoutDots(true);
+        }
+    }
+
+    function executeRegroup(sourceDot, newType, dropX, dropY) {
+        sourceDot.active = false;
+        
+        // Vanish source dot
+        anime({
+            targets: sourceDot.el,
+            scale: 0,
+            duration: 250,
+            easing: &#x27;easeInBack&#x27;,
+            complete: () =&gt; {
+                sourceDot.el.remove();
+                // Spawn 10 new dots
+                spawnDots(newType, 10, dropX, dropY);
+                // Animate them to grid
+                layoutDots(true);
+            }
+        });
+    }
+
+    function checkWin() {
+        if (removedCounts[TYPE_100] === currProb.sub[TYPE_100] &amp;&amp;
+            removedCounts[TYPE_10] === currProb.sub[TYPE_10] &amp;&amp;
+            removedCounts[TYPE_1] === currProb.sub[TYPE_1]) {
+            
+            gameWon = true;
+            
+            // Calculate final answer
+            let startNum = currProb.start[0]*100 + currProb.start[1]*10 + currProb.start[2];
+            let subNum = currProb.sub[0]*100 + currProb.sub[1]*10 + currProb.sub[2];
+            let ans = startNum - subNum;
+
+            // Animate remaining dots dropping
+            let activeDots = dots.filter(d =&gt; d.active);
+            activeDots.forEach(d =&gt; {
+                anime({
+                    targets: d.el,
+                    cy: 550,
+                    opacity: 0,
+                    duration: Math.random() * 500 + 800,
+                    easing: &#x27;easeInCubic&#x27;
+                });
+            });
+
+            // Show Win text
+            winText.textContent = `${ans}`;
+            anime({
+                targets: winText,
+                opacity: 1,
+                scale: [0.2, 1],
+                duration: 1000,
+                delay: 600,
+                easing: &#x27;easeOutElastic(1, .6)&#x27;
+            });
+        }
+    }
+
+    // Start App
+    window.onload = init;
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;"
+      style="width:100%;flex:1;border:none;border-radius:16px;min-height:500px;"
+      sandbox="allow-scripts allow-same-origin"
+    ></iframe>
+  </div>
+
+
+  <div class="slide" id="s3">
+    <div class="slide-header">
+      <div class="slide-num">3 of 5</div>
+      <div class="slide-title">Estimate &amp; <span>Solve!</span> 🎯</div>
+    </div>
+    <iframe
+      srcdoc="&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;Estimate &amp; Solve: Subtraction Game&lt;/title&gt;
+    &lt;!-- anime.js for animations --&gt;
+    &lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js&quot;&gt;&lt;/script&gt;
+    &lt;style&gt;
+        :root {
+            /* Montessori Color Scheme */
+            --color-hundreds: #1E88E5; /* Blue */
+            --color-tens: #E53935;     /* Red */
+            --color-ones: #43A047;     /* Green */
+            
+            --bg-color: #f4f6f8;
+            --panel-bg: #ffffff;
+            --text-main: #2c3e50;
+            --border-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: &#x27;Segoe UI&#x27;, Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        select {
+            padding: 10px 15px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            border: 2px solid #ccc;
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #34495e;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        /* --- Phase 1: Estimation Station --- */
+        #phase1 {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .problem-display {
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .slider-group {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .slider-row label {
+            font-size: 1.2rem;
+            font-weight: bold;
+            width: 120px;
+        }
+
+        input[type=&quot;range&quot;] {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+
+        .slider-val {
+            font-size: 1.5rem;
+            font-weight: bold;
+            width: 60px;
+            text-align: right;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            font-weight: bold;
+        }
+
+        button:hover { background-color: #2980b9; }
+        button:active { transform: scale(0.95); }
+
+        .feedback {
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-height: 30px;
+        }
+        .feedback.success { color: #27ae60; }
+        .feedback.error { color: #e74c3c; }
+
+        /* --- Phase 2: Regrouping Lab --- */
+        #phase2 {
+            display: none;
+            opacity: 0;
+        }
+
+        .grid-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .col {
+            background: #fafafa;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .col.drag-over {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+
+        .col h3 {
+            margin: 0 0 10px 0;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .col-h h3 { color: var(--color-hundreds); }
+        .col-t h3 { color: var(--color-tens); }
+        .col-o h3 { color: var(--color-ones); }
+
+        .target-text {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 5px;
+            background: #eee;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .zone {
+            flex-grow: 1;
+            min-height: 180px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 8px;
+            position: relative;
+        }
+
+        .zone-minuend {
+            background: white;
+            cursor: pointer;
+        }
+        
+        .zone-minuend:hover {
+            border-color: #aaa;
+        }
+
+        .zone-removed {
+            background: #f0f0f0;
+            min-height: 100px;
+            margin-top: 10px;
+        }
+
+        .zone-title {
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: white;
+            padding: 0 5px;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        /* --- Dots (SVG Graphics) --- */
+        .dot {
+            width: 32px;
+            height: 32px;
+            cursor: grab;
+            transition: transform 0.2s;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .dot.locked { cursor: default; }
+        .dot:active:not(.locked) { cursor: grabbing; }
+        .dot:hover:not(.locked) { transform: scale(1.1); }
+
+        .dot svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+        }
+
+        .dot-h { color: var(--color-hundreds); }
+        .dot-t { color: var(--color-tens); }
+        .dot-o { color: var(--color-ones); }
+
+        /* Spark effects for explosion */
+        .spark {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* Tooltip */
+        #tooltip {
+            position: fixed;
+            background: #34495e;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 10000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        #tooltip::after {
+            content: &#x27;&#x27;;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: #34495e transparent transparent transparent;
+        }
+
+        .success-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            z-index: 5000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .success-overlay h1 {
+            font-size: 4rem;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+    &lt;header&gt;
+        &lt;select id=&quot;problem-select&quot; onchange=&quot;loadProblem(this.value)&quot;&gt;
+            &lt;optgroup label=&quot;Group A: Worksheet Problems&quot;&gt;
+                &lt;option value=&quot;0&quot;&gt;1. 339 - 163&lt;/option&gt;
+                &lt;option value=&quot;1&quot;&gt;2. 355 - 172&lt;/option&gt;
+                &lt;option value=&quot;2&quot;&gt;3. 647 - 386&lt;/option&gt;
+                &lt;option value=&quot;3&quot;&gt;4. 518 - 248&lt;/option&gt;
+            &lt;/optgroup&gt;
+            &lt;optgroup label=&quot;Group B: New Practice Set&quot;&gt;
+                &lt;option value=&quot;4&quot;&gt;5. 148 - 60&lt;/option&gt;
+                &lt;option value=&quot;5&quot;&gt;6. 245 - 82&lt;/option&gt;
+                &lt;option value=&quot;6&quot;&gt;7. 326 - 71&lt;/option&gt;
+                &lt;option value=&quot;7&quot;&gt;8. 534 - 93&lt;/option&gt;
+            &lt;/optgroup&gt;
+        &lt;/select&gt;
+    &lt;/header&gt;
+
+    &lt;!-- Phase 1: Estimation Station --&gt;
+    &lt;section id=&quot;phase1&quot; class=&quot;panel&quot;&gt;
+        &lt;h2&gt;Phase 1: The Estimation Station&lt;/h2&gt;
+        &lt;p&gt;Round the numbers to the nearest 10 to estimate the answer.&lt;/p&gt;
+        
+        &lt;div class=&quot;problem-display&quot;&gt;
+            &lt;span id=&quot;p1-m-text&quot;&gt;&lt;/span&gt; - &lt;span id=&quot;p1-s-text&quot;&gt;&lt;/span&gt;
+        &lt;/div&gt;
+
+        &lt;div class=&quot;slider-group&quot;&gt;
+            &lt;div class=&quot;slider-row&quot;&gt;
+                &lt;label id=&quot;lbl-m&quot;&gt;Minuend&lt;/label&gt;
+                &lt;input type=&quot;range&quot; id=&quot;est-m&quot; min=&quot;0&quot; max=&quot;1000&quot; step=&quot;10&quot; value=&quot;0&quot;&gt;
+                &lt;div class=&quot;slider-val&quot; id=&quot;val-m&quot;&gt;0&lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;slider-row&quot;&gt;
+                &lt;label id=&quot;lbl-s&quot;&gt;Subtrahend&lt;/label&gt;
+                &lt;input type=&quot;range&quot; id=&quot;est-s&quot; min=&quot;0&quot; max=&quot;1000&quot; step=&quot;10&quot; value=&quot;0&quot;&gt;
+                &lt;div class=&quot;slider-val&quot; id=&quot;val-s&quot;&gt;0&lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;button onclick=&quot;checkEstimation()&quot;&gt;Lock in Estimate&lt;/button&gt;
+        &lt;div id=&quot;p1-feedback&quot; class=&quot;feedback&quot;&gt;&lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;!-- Phase 2: Regrouping Lab --&gt;
+    &lt;section id=&quot;phase2&quot; class=&quot;panel&quot;&gt;
+        &lt;h2&gt;Phase 2: The Regrouping Lab&lt;/h2&gt;
+        &lt;p style=&quot;text-align:center; color:#555; margin-bottom:0;&quot;&gt;
+            Click a dot to subtract it. Need more? &lt;b&gt;Drag&lt;/b&gt; a larger dot to its right neighbor to regroup!
+        &lt;/p&gt;
+
+        &lt;div class=&quot;grid-board&quot;&gt;
+            &lt;!-- Hundreds Column --&gt;
+            &lt;div class=&quot;col col-h&quot; id=&quot;col-h&quot; ondrop=&quot;dropBorrow(event, &#x27;h&#x27;)&quot; ondragover=&quot;allowDrop(event)&quot; ondragenter=&quot;dragEnter(event)&quot; ondragleave=&quot;dragLeave(event)&quot;&gt;
+                &lt;h3&gt;Hundreds&lt;/h3&gt;
+                &lt;div class=&quot;target-text&quot; id=&quot;target-h&quot;&gt;To Remove: 0&lt;/div&gt;
+                &lt;div class=&quot;zone zone-minuend&quot; id=&quot;zone-m-h&quot; onclick=&quot;checkEmptyClick(&#x27;h&#x27;, event)&quot;&gt;
+                    &lt;span class=&quot;zone-title&quot;&gt;Current&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;zone zone-removed&quot; id=&quot;zone-r-h&quot;&gt;
+                    &lt;span class=&quot;zone-title&quot; style=&quot;background:#f0f0f0;&quot;&gt;Removed&lt;/span&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Tens Column --&gt;
+            &lt;div class=&quot;col col-t&quot; id=&quot;col-t&quot; ondrop=&quot;dropBorrow(event, &#x27;t&#x27;)&quot; ondragover=&quot;allowDrop(event)&quot; ondragenter=&quot;dragEnter(event)&quot; ondragleave=&quot;dragLeave(event)&quot;&gt;
+                &lt;h3&gt;Tens&lt;/h3&gt;
+                &lt;div class=&quot;target-text&quot; id=&quot;target-t&quot;&gt;To Remove: 0&lt;/div&gt;
+                &lt;div class=&quot;zone zone-minuend&quot; id=&quot;zone-m-t&quot; onclick=&quot;checkEmptyClick(&#x27;t&#x27;, event)&quot;&gt;
+                    &lt;span class=&quot;zone-title&quot;&gt;Current&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;zone zone-removed&quot; id=&quot;zone-r-t&quot;&gt;
+                    &lt;span class=&quot;zone-title&quot; style=&quot;background:#f0f0f0;&quot;&gt;Removed&lt;/span&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Ones Column --&gt;
+            &lt;div class=&quot;col col-o&quot; id=&quot;col-o&quot; ondrop=&quot;dropBorrow(event, &#x27;o&#x27;)&quot; ondragover=&quot;allowDrop(event)&quot; ondragenter=&quot;dragEnter(event)&quot; ondragleave=&quot;dragLeave(event)&quot;&gt;
+                &lt;h3&gt;Ones&lt;/h3&gt;
+                &lt;div class=&quot;target-text&quot; id=&quot;target-o&quot;&gt;To Remove: 0&lt;/div&gt;
+                &lt;div class=&quot;zone zone-minuend&quot; id=&quot;zone-m-o&quot; onclick=&quot;checkEmptyClick(&#x27;o&#x27;, event)&quot;&gt;
+                    &lt;span class=&quot;zone-title&quot;&gt;Current&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;zone zone-removed&quot; id=&quot;zone-r-o&quot;&gt;
+                    &lt;span class=&quot;zone-title&quot; style=&quot;background:#f0f0f0;&quot;&gt;Removed&lt;/span&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;!-- Tooltip --&gt;
+    &lt;div id=&quot;tooltip&quot;&gt;Not enough! Borrow from the neighbor.&lt;/div&gt;
+
+    &lt;!-- Success Overlay --&gt;
+    &lt;div class=&quot;success-overlay&quot; id=&quot;success-overlay&quot;&gt;
+        &lt;h1&gt;Correct!&lt;/h1&gt;
+        &lt;h2 id=&quot;final-answer-text&quot; style=&quot;font-size: 2.5rem; color: #2c3e50;&quot;&gt;&lt;/h2&gt;
+        &lt;button onclick=&quot;document.getElementById(&#x27;success-overlay&#x27;).style.display=&#x27;none&#x27;; document.getElementById(&#x27;problem-select&#x27;).focus();&quot; style=&quot;margin-top: 20px; font-size: 1.5rem;&quot;&gt;Play Next&lt;/button&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        // Data Structure
+        const dataset = [
+            { id: 0, m: 339, s: 163, estM: 340, estS: 160 },
+            { id: 1, m: 355, s: 172, estM: 360, estS: 170 },
+            { id: 2, m: 647, s: 386, estM: 650, estS: 390 },
+            { id: 3, m: 518, s: 248, estM: 520, estS: 250 },
+            { id: 4, m: 148, s: 60,  estM: 150, estS: 60  },
+            { id: 5, m: 245, s: 82,  estM: 250, estS: 80  },
+            { id: 6, m: 326, s: 71,  estM: 330, estS: 70  },
+            { id: 7, m: 534, s: 93,  estM: 530, estS: 90  }
+        ];
+
+        let currentProblem = null;
+        let p2State = {
+            m: { h: 0, t: 0, o: 0 },
+            rem: { h: 0, t: 0, o: 0 },
+            target: { h: 0, t: 0, o: 0 }
+        };
+
+        const dotSVGBase = `&lt;svg viewBox=&quot;0 0 24 24&quot;&gt;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;10&quot; fill=&quot;currentColor&quot;/&gt;&lt;/svg&gt;`;
+        let tooltipTimeout;
+
+        // UI Binding for Sliders
+        const estMInput = document.getElementById(&#x27;est-m&#x27;);
+        const estSInput = document.getElementById(&#x27;est-s&#x27;);
+        const valM = document.getElementById(&#x27;val-m&#x27;);
+        const valS = document.getElementById(&#x27;val-s&#x27;);
+
+        estMInput.oninput = () =&gt; valM.innerText = estMInput.value;
+        estSInput.oninput = () =&gt; valS.innerText = estSInput.value;
+
+        // Init
+        window.onload = () =&gt; {
+            loadProblem(0);
+        };
+
+        // Parse integer into H/T/O breakdown
+        function parsePlaceValue(num) {
+            return {
+                h: Math.floor(num / 100),
+                t: Math.floor((num % 100) / 10),
+                o: num % 10
+            };
+        }
+
+        // Load a new problem
+        function loadProblem(index) {
+            currentProblem = dataset[index];
+            
+            // Setup Phase 1 UI
+            document.getElementById(&#x27;p1-m-text&#x27;).innerText = currentProblem.m;
+            document.getElementById(&#x27;p1-s-text&#x27;).innerText = currentProblem.s;
+            document.getElementById(&#x27;lbl-m&#x27;).innerText = `Round ${currentProblem.m}`;
+            document.getElementById(&#x27;lbl-s&#x27;).innerText = `Round ${currentProblem.s}`;
+            
+            // Reset Sliders
+            estMInput.value = 0; valM.innerText = &quot;0&quot;;
+            estSInput.value = 0; valS.innerText = &quot;0&quot;;
+            document.getElementById(&#x27;p1-feedback&#x27;).innerText = &quot;&quot;;
+            document.getElementById(&#x27;p1-feedback&#x27;).className = &quot;feedback&quot;;
+
+            // Hide Phase 2
+            const phase2 = document.getElementById(&#x27;phase2&#x27;);
+            phase2.style.display = &#x27;none&#x27;;
+            phase2.style.opacity = 0;
+
+            // Reset Game Board
+            [&#x27;h&#x27;, &#x27;t&#x27;, &#x27;o&#x27;].forEach(col =&gt; {
+                document.getElementById(`zone-m-${col}`).innerHTML = &#x27;&lt;span class=&quot;zone-title&quot;&gt;Current&lt;/span&gt;&#x27;;
+                document.getElementById(`zone-r-${col}`).innerHTML = &#x27;&lt;span class=&quot;zone-title&quot; style=&quot;background:#f0f0f0;&quot;&gt;Removed&lt;/span&gt;&#x27;;
+            });
+        }
+
+        // Validate Estimation
+        function checkEstimation() {
+            const mVal = parseInt(estMInput.value);
+            const sVal = parseInt(estSInput.value);
+            const feedback = document.getElementById(&#x27;p1-feedback&#x27;);
+
+            if (mVal === currentProblem.estM &amp;&amp; sVal === currentProblem.estS) {
+                const estDiff = mVal - sVal;
+                feedback.innerHTML = `Great! Estimated answer: &lt;b&gt;${estDiff}&lt;/b&gt;. Unlocking Lab...`;
+                feedback.className = &quot;feedback success&quot;;
+                
+                // Animate entry to phase 2
+                setTimeout(startPhase2, 1000);
+            } else {
+                feedback.innerText = &quot;Not quite. Remember to round to the nearest 10!&quot;;
+                feedback.className = &quot;feedback error&quot;;
+                
+                anime({
+                    targets: &#x27;.slider-group&#x27;,
+                    translateX: [0, -10, 10, -10, 10, 0],
+                    duration: 400,
+                    easing: &#x27;easeInOutSine&#x27;
+                });
+            }
+        }
+
+        // Setup Main Game Loop
+        function startPhase2() {
+            document.getElementById(&#x27;phase2&#x27;).style.display = &#x27;block&#x27;;
+            anime({
+                targets: &#x27;#phase2&#x27;,
+                opacity: 1,
+                translateY: [20, 0],
+                duration: 600,
+                easing: &#x27;easeOutCubic&#x27;
+            });
+
+            // Initialize State
+            p2State.m = parsePlaceValue(currentProblem.m);
+            p2State.target = parsePlaceValue(currentProblem.s);
+            p2State.rem = { h: 0, t: 0, o: 0 };
+
+            // Render Zones
+            renderMinuend(&#x27;h&#x27;);
+            renderMinuend(&#x27;t&#x27;);
+            renderMinuend(&#x27;o&#x27;);
+            updateTargetTexts();
+            
+            // Entry Animation for dots
+            anime({
+                targets: &#x27;.dot&#x27;,
+                scale: [0, 1],
+                delay: anime.stagger(50),
+                duration: 600,
+                easing: &#x27;easeOutBack&#x27;
+            });
+        }
+
+        function updateTargetTexts() {
+            [&#x27;h&#x27;, &#x27;t&#x27;, &#x27;o&#x27;].forEach(col =&gt; {
+                const needed = p2State.target[col] - p2State.rem[col];
+                const el = document.getElementById(`target-${col}`);
+                if (needed &gt; 0) {
+                    el.innerText = `To Remove: ${needed}`;
+                    el.style.color = &#x27;inherit&#x27;;
+                } else {
+                    el.innerText = `✓ Completed`;
+                    el.style.color = &#x27;#43A047&#x27;;
+                }
+            });
+        }
+
+        // Render Dots in the Minuend Zone
+        function renderMinuend(colType) {
+            const zone = document.getElementById(`zone-m-${colType}`);
+            // Keep title, clear dots
+            zone.innerHTML = &#x27;&lt;span class=&quot;zone-title&quot;&gt;Current&lt;/span&gt;&#x27;;
+            
+            for(let i = 0; i &lt; p2State.m[colType]; i++) {
+                const dot = document.createElement(&#x27;div&#x27;);
+                dot.className = `dot dot-${colType}`;
+                dot.innerHTML = dotSVGBase;
+                
+                // Allow dragging only if it&#x27;s Hundreds or Tens (can&#x27;t borrow from Ones)
+                if (colType === &#x27;h&#x27; || colType === &#x27;t&#x27;) {
+                    dot.draggable = true;
+                    dot.ondragstart = (e) =&gt; {
+                        e.dataTransfer.setData(&#x27;sourceCol&#x27;, colType);
+                        e.dataTransfer.effectAllowed = &#x27;move&#x27;;
+                        setTimeout(() =&gt; dot.style.opacity = &#x27;0.5&#x27;, 0);
+                    };
+                    dot.ondragend = (e) =&gt; {
+                        dot.style.opacity = &#x27;1&#x27;;
+                        document.querySelectorAll(&#x27;.col&#x27;).forEach(c =&gt; c.classList.remove(&#x27;drag-over&#x27;));
+                    };
+                }
+
+                // Click to Remove
+                dot.onclick = (e) =&gt; {
+                    e.stopPropagation(); // Prevent empty zone click
+                    removeDot(dot, colType, e);
+                };
+
+                zone.appendChild(dot);
+            }
+        }
+
+        // Action: Click a dot to subtract
+        function removeDot(dotEl, colType, e) {
+            if (p2State.rem[colType] &gt;= p2State.target[colType]) {
+                showTooltip(&quot;You&#x27;ve already removed enough here!&quot;, e.clientX, e.clientY);
+                return;
+            }
+
+            p2State.m[colType]--;
+            p2State.rem[colType]++;
+
+            // Move DOM Element
+            const remZone = document.getElementById(`zone-r-${colType}`);
+            dotEl.onclick = null; 
+            dotEl.draggable = false;
+            dotEl.classList.add(&#x27;locked&#x27;);
+            remZone.appendChild(dotEl);
+
+            // Pop Animation
+            anime({
+                targets: dotEl,
+                scale: [0.5, 1],
+                duration: 400,
+                easing: &#x27;easeOutElastic(1, .5)&#x27;
+            });
+
+            updateTargetTexts();
+            checkWin();
+        }
+
+        // Action: Click empty space constraints
+        function checkEmptyClick(colType, e) {
+            const needed = p2State.target[colType] - p2State.rem[colType];
+            if (needed &gt; 0 &amp;&amp; p2State.m[colType] === 0) {
+                showTooltip(&quot;Not enough! Borrow from the neighbor.&quot;, e.clientX, e.clientY);
+                
+                // Shake the left neighbor if exists
+                let neighbor = colType === &#x27;o&#x27; ? &#x27;t&#x27; : (colType === &#x27;t&#x27; ? &#x27;h&#x27; : null);
+                if (neighbor &amp;&amp; p2State.m[neighbor] &gt; 0) {
+                    anime({
+                        targets: `#col-${neighbor}`,
+                        translateX: [-5, 5, -5, 5, 0],
+                        duration: 400
+                    });
+                }
+            }
+        }
+
+        // Drag &amp; Drop Mechanics
+        function allowDrop(e) { e.preventDefault(); }
+        function dragEnter(e) {
+            e.preventDefault();
+            const targetCol = e.currentTarget;
+            targetCol.classList.add(&#x27;drag-over&#x27;);
+        }
+        function dragLeave(e) {
+            e.currentTarget.classList.remove(&#x27;drag-over&#x27;);
+        }
+
+        function dropBorrow(e, targetColType) {
+            e.preventDefault();
+            document.querySelectorAll(&#x27;.col&#x27;).forEach(c =&gt; c.classList.remove(&#x27;drag-over&#x27;));
+            
+            const sourceColType = e.dataTransfer.getData(&#x27;sourceCol&#x27;);
+            
+            // Validate Borrow Constraints
+            if (sourceColType === &#x27;h&#x27; &amp;&amp; targetColType === &#x27;t&#x27;) {
+                executeBorrow(&#x27;h&#x27;, &#x27;t&#x27;, e.clientX, e.clientY);
+            } else if (sourceColType === &#x27;t&#x27; &amp;&amp; targetColType === &#x27;o&#x27;) {
+                executeBorrow(&#x27;t&#x27;, &#x27;o&#x27;, e.clientX, e.clientY);
+            } else if (sourceColType === targetColType) {
+                // dropped on itself, do nothing
+            } else {
+                showTooltip(&quot;Can only borrow to the direct right neighbor!&quot;, e.clientX, e.clientY);
+            }
+        }
+
+        // The Regrouping Animation &amp; Logic
+        function executeBorrow(sourceCol, targetCol, x, y) {
+            p2State.m[sourceCol]--;
+            p2State.m[targetCol] += 10;
+
+            // 1. Re-render source column immediately so dot vanishes
+            renderMinuend(sourceCol);
+
+            // 2. Explosion Effect!
+            for(let i=0; i&lt;10; i++) {
+                let spark = document.createElement(&#x27;div&#x27;);
+                spark.className = `dot dot-${targetCol} spark`;
+                spark.innerHTML = dotSVGBase;
+                spark.style.left = `${x - 16}px`; // center on mouse
+                spark.style.top = `${y - 16}px`;
+                document.body.appendChild(spark);
+
+                anime({
+                    targets: spark,
+                    translateX: () =&gt; anime.random(-80, 80),
+                    translateY: () =&gt; anime.random(-80, 80),
+                    scale: [0.5, 1.2, 0],
+                    opacity: [1, 0],
+                    duration: 800,
+                    easing: &#x27;easeOutExpo&#x27;,
+                    complete: function(anim) {
+                        spark.remove();
+                    }
+                });
+            }
+
+            // 3. Render target column and pop new dots
+            renderMinuend(targetCol);
+            
+            // Find the last 10 added dots and animate them appearing in the grid
+            const targetZone = document.getElementById(`zone-m-${targetCol}`);
+            const newDots = Array.from(targetZone.querySelectorAll(&#x27;.dot&#x27;)).slice(-10);
+            
+            anime({
+                targets: newDots,
+                scale: [0, 1],
+                opacity: [0, 1],
+                delay: anime.stagger(30, {start: 300}),
+                duration: 500,
+                easing: &#x27;easeOutBack&#x27;
+            });
+        }
+
+        // Utilities
+        function showTooltip(msg, x, y) {
+            const tt = document.getElementById(&#x27;tooltip&#x27;);
+            tt.innerText = msg;
+            
+            // Calculate positioning to avoid off-screen
+            const ttWidth = 220; 
+            let posX = x - (ttWidth/2);
+            let posY = y - 50;
+
+            if (posX &lt; 10) posX = 10;
+            if (posX + ttWidth &gt; window.innerWidth) posX = window.innerWidth - ttWidth - 10;
+
+            tt.style.left = `${posX}px`;
+            tt.style.top = `${posY}px`;
+            
+            tt.style.opacity = 1;
+            tt.style.transform = &#x27;translateY(0)&#x27;;
+
+            clearTimeout(tooltipTimeout);
+            tooltipTimeout = setTimeout(() =&gt; {
+                tt.style.opacity = 0;
+                tt.style.transform = &#x27;translateY(-10px)&#x27;;
+            }, 2500);
+        }
+
+        function checkWin() {
+            const { rem, target } = p2State;
+            if (rem.h === target.h &amp;&amp; rem.t === target.t &amp;&amp; rem.o === target.o) {
+                // Calculate final answer
+                const actualAnswer = currentProblem.m - currentProblem.s;
+                
+                setTimeout(() =&gt; {
+                    const overlay = document.getElementById(&#x27;success-overlay&#x27;);
+                    document.getElementById(&#x27;final-answer-text&#x27;).innerText = `${currentProblem.m} - ${currentProblem.s} = ${actualAnswer}`;
+                    overlay.style.display = &#x27;flex&#x27;;
+                    
+                    anime({
+                        targets: overlay,
+                        opacity: [0, 1],
+                        scale: [0.9, 1],
+                        duration: 600,
+                        easing: &#x27;easeOutExpo&#x27;
+                    });
+                }, 500);
+            }
+        }
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;"
+      style="width:100%;flex:1;border:none;border-radius:16px;min-height:600px;"
+      sandbox="allow-scripts allow-same-origin"
+    ></iframe>
+  </div>
+
+
+  <div class="slide" id="s4">
+    <div class="slide-header">
+      <div class="slide-num">4 of 5</div>
+      <div class="slide-title">Smiley <span>Math!</span> 😊</div>
+    </div>
+    <div class="vocab-bar">
+      <div class="vocab-pill purple">Unknown</div>
+      <div class="vocab-pill">Trial &amp; Improvement</div>
+    </div>
+
+    <div class="smiley-equation">
+      <span>147</span>
+      <span style="color:var(--t-color)">−</span>
+      <div class="smiley-box" id="smiley-box">
+        <span id="smiley-icon">😊</span>
+        <span class="current-val" id="smiley-val" style="display:none;"></span>
+      </div>
+      <span>=</span>
+      <span style="color:var(--o-dark)">63</span>
+    </div>
+
+    <div class="smiley-hint">Tap digits below to build a number, then tap <strong>Test It!</strong></div>
+
+    <div class="card">
+      <div class="card-title">Build your guess 👇</div>
+      <div class="build-number-area">
+        <div>
+          <div class="digit-slot" id="ds-tens" onclick="selectSlot('tens')">
+            <span id="dsv-tens">_</span>
+            <span class="slot-label">tens</span>
+          </div>
+        </div>
+        <div>
+          <div class="digit-slot" id="ds-ones" onclick="selectSlot('ones')">
+            <span id="dsv-ones">_</span>
+            <span class="slot-label">ones</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:center;">
+          <button class="check-btn" style="padding:10px 22px;font-size:17px;" onclick="testSmiley()">🧪 Test It!</button>
+          <button class="clear-btn" onclick="clearSmiley()">✕ Clear</button>
+        </div>
+      </div>
+      <div class="s4-numpad" style="margin-top:12px;">
+        <div class="num-tile" onclick="smileyDigit(0)">0</div>
+        <div class="num-tile" onclick="smileyDigit(1)">1</div>
+        <div class="num-tile" onclick="smileyDigit(2)">2</div>
+        <div class="num-tile" onclick="smileyDigit(3)">3</div>
+        <div class="num-tile" onclick="smileyDigit(4)">4</div>
+        <div class="num-tile" onclick="smileyDigit(5)">5</div>
+        <div class="num-tile" onclick="smileyDigit(6)">6</div>
+        <div class="num-tile" onclick="smileyDigit(7)">7</div>
+        <div class="num-tile" onclick="smileyDigit(8)">8</div>
+        <div class="num-tile" onclick="smileyDigit(9)">9</div>
+      </div>
+    </div>
+
+    <div class="trial-display empty" id="trial-display">
+      Your result will appear here…
+    </div>
+
+    <div class="card" id="trial-history-card" style="display:none;">
+      <div class="card-title">Tries so far 📝</div>
+      <div id="trial-history" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+  </div>
+
+
+  <div class="slide" id="s5">
+    <div class="slide-header">
+      <div class="slide-num">5 of 5</div>
+      <div class="slide-title">Think Like a <span>Mathematician!</span> 🧠</div>
+    </div>
+    <div class="vocab-bar">
+      <div class="vocab-pill purple">Unknown</div>
+      <div class="vocab-pill green">Logic</div>
+    </div>
+
+    <div class="info-box">
+      △ and □ are <strong>unknown digits</strong>. Tap a number, then tap △ or □ to place it.
+    </div>
+
+    <div class="puzzle-equation">
+      <span>3</span>
+      <div class="shape-slot triangle-slot" id="tri-slot" onclick="selectShape('tri')">
+        <span class="slot-digit" id="tri-digit">△</span>
+      </div>
+      <span>7</span>
+      <span style="color:var(--t-color)">−</span>
+      <span>1</span>
+      <div class="shape-slot square-slot" id="sq-slot" onclick="selectShape('sq')">
+        <span class="slot-digit" id="sq-digit">□</span>
+      </div>
+      <span>7</span>
+      <span>=</span>
+      <span style="color:var(--o-dark)">160</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Number Bank — Tap a digit, then tap △ or □</div>
+      <div class="s5-numpad" id="s5-numpad">
+        <div class="num-tile" onclick="s5PickDigit(0,this)">0</div>
+        <div class="num-tile" onclick="s5PickDigit(1,this)">1</div>
+        <div class="num-tile" onclick="s5PickDigit(2,this)">2</div>
+        <div class="num-tile" onclick="s5PickDigit(3,this)">3</div>
+        <div class="num-tile" onclick="s5PickDigit(4,this)">4</div>
+        <div class="num-tile" onclick="s5PickDigit(5,this)">5</div>
+        <div class="num-tile" onclick="s5PickDigit(6,this)">6</div>
+        <div class="num-tile" onclick="s5PickDigit(7,this)">7</div>
+        <div class="num-tile" onclick="s5PickDigit(8,this)">8</div>
+        <div class="num-tile" onclick="s5PickDigit(9,this)">9</div>
+      </div>
+    </div>
+
+    <div class="puzzle-result empty" id="s5-result">
+      Place both digits to check…
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <button class="check-btn" onclick="checkS5()">✅ Check!</button>
+      <button class="reset-btn" onclick="resetS5()">🔄 Reset</button>
+    </div>
+
+    <div class="s5-hint" id="s5-hint" style="display:none;"></div>
+
+    <div class="info-box" style="margin-top:4px;">
+      💡 There are <strong>6 possible solutions!</strong> Can you find them all? Hint: look at the difference between △ and □.
+    </div>
+  </div>
+
+<div id="nav">
+    <button class="nav-btn prev" id="btn-prev" onclick="navigate(-1)" disabled>← Back</button>
+    <div class="dots" id="dots"></div>
+    <button class="nav-btn next" id="btn-next" onclick="navigate(1)">Next →</button>
+  </div>
+
+</div><script>
+// ══════════════════════════════════════
+//  NAVIGATION + SWIPE
+// ══════════════════════════════════════
+const TOTAL = 6;
+let current = 0;
+
+function buildDots() {
+  const c = document.getElementById('dots');
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.id = 'dot' + i;
+    c.appendChild(d);
+  }
+}
+
+function navigate(dir) {
+  const slides = document.querySelectorAll('.slide');
+  slides[current].classList.remove('active');
+  document.getElementById('dot' + current).classList.remove('active');
+  current = Math.max(0, Math.min(TOTAL - 1, current + dir));
+  slides[current].classList.add('active');
+  document.getElementById('dot' + current).classList.add('active');
+  document.getElementById('btn-prev').disabled = current === 0;
+  document.getElementById('btn-next').disabled = current === TOTAL - 1;
+}
+
+// ── Swipe gesture ──
+(function() {
+  let swipeStartX = 0, swipeStartY = 0, swipeLocked = false;
+  const app = document.getElementById('app');
+
+  app.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+    swipeLocked = false;
+  }, { passive: true });
+
+  app.addEventListener('touchend', e => {
+    if (swipeLocked) return;
+    const dx = e.changedTouches[0].clientX - swipeStartX;
+    const dy = e.changedTouches[0].clientY - swipeStartY;
+    if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 60) {
+      swipeLocked = true;
+      navigate(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+})();
+
+// ══════════════════════════════════════
+//  SLIDE 1 — EXCHANGE IT (multi-example)
+// ══════════════════════════════════════
+const S1_EXAMPLES = [
+  { num: 235, h: 2, t: 3, o: 5 },
+  { num: 452, h: 4, t: 5, o: 2 },
+  { num: 763, h: 7, t: 6, o: 3 },
+  { num: 309, h: 3, t: 0, o: 9 }
+];
+let currentS1 = 0;
+let s1Exchanged = false;
+let s1InDrag = false;
+
+function loadS1Example(idx) {
+  currentS1 = idx;
+  s1Exchanged = false;
+
+  // Update active button
+  document.querySelectorAll('.example-btn').forEach((b, i) =>
+    b.classList.toggle('active', i === idx));
+
+  const ex = S1_EXAMPLES[idx];
+
+  // Update card title
+  document.getElementById('s1-card-title').textContent = ex.num + ' shown as blocks';
+
+  // Rebuild H bank
+  const hBank = document.getElementById('h-bank');
+  hBank.innerHTML = '';
+  for (let i = 0; i < ex.h; i++) {
+    const b = document.createElement('div');
+    b.className = 'block block-h';
+    b.dataset.type = 'hundred';
+    b.textContent = '100';
+    hBank.appendChild(b);
+    makeS1Draggable(b);
+  }
+
+  // Rebuild T bank
+  const tBank = document.getElementById('t-bank');
+  tBank.innerHTML = '';
+  for (let i = 0; i < ex.t; i++) {
+    const b = document.createElement('div');
+    b.className = 'block block-t';
+    b.textContent = '10';
+    tBank.appendChild(b);
+  }
+
+  // Rebuild O bank
+  const oBank = document.getElementById('o-bank');
+  oBank.innerHTML = '';
+  for (let i = 0; i < ex.o; i++) {
+    const b = document.createElement('div');
+    b.className = 'block block-o';
+    b.textContent = '1';
+    oBank.appendChild(b);
+  }
+
+  // Reset exchange zone
+  document.getElementById('exchanged-tens').innerHTML = '';
+  const zone = document.getElementById('exchange-zone');
+  zone.querySelector('.zone-label').style.display = '';
+  zone.classList.remove('over');
+
+  // Reset equation display
+  const hVal = ex.h > 1
+    ? Array.from({length: ex.h}, () => '100').join(' + ')
+    : (ex.h === 1 ? '100' : '—');
+  document.getElementById('eq-label').textContent = ex.num + ' =';
+  document.getElementById('eq-h').textContent = hVal;
+  document.getElementById('eq-t').textContent = (ex.t * 10) || '0';
+  document.getElementById('eq-o').textContent = ex.o || '0';
+}
+
+function initSlide1() {
+  const hBank = document.getElementById('h-bank');
+  Array.from(hBank.querySelectorAll('.block-h')).forEach(b => makeS1Draggable(b));
+}
+
+function makeS1Draggable(el) {
+  let ghost, offX, offY;
+
+  function onDown(e) {
+    if (s1Exchanged) return;
+    e.preventDefault();
+    const touch = e.touches ? e.touches[0] : e;
+    const rect = el.getBoundingClientRect();
+    offX = touch.clientX - rect.left;
+    offY = touch.clientY - rect.top;
+
+    ghost = el.cloneNode(true);
+    ghost.style.cssText = `
+      position:fixed; width:${rect.width}px; height:${rect.height}px;
+      left:${touch.clientX - offX}px; top:${touch.clientY - offY}px;
+      pointer-events:none; z-index:9999; opacity:0.85;
+      transform:scale(1.1) rotate(-4deg); transition:none;
+      font-family:'Fredoka One',cursive; display:flex;
+      align-items:center;justify-content:center;
+      background:var(--h-color);color:#fff;border-radius:12px;font-size:15px;
+      border:3px solid #fff;box-shadow:0 6px 0 var(--h-dark);
+    `;
+    document.body.appendChild(ghost);
+    el.style.opacity = '0.3';
+    s1InDrag = true;
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', onUp);
+  }
+
+  function onMove(e) {
+    if (!ghost) return;
+    e.preventDefault();
+    const touch = e.touches ? e.touches[0] : e;
+    ghost.style.left = (touch.clientX - offX) + 'px';
+    ghost.style.top = (touch.clientY - offY) + 'px';
+
+    const zone = document.getElementById('exchange-zone');
+    const zr = zone.getBoundingClientRect();
+    const over = touch.clientX > zr.left && touch.clientX < zr.right
+               && touch.clientY > zr.top && touch.clientY < zr.bottom;
+    zone.classList.toggle('over', over);
+  }
+
+  function onUp(e) {
+    if (!ghost) return;
+    const touch = e.changedTouches ? e.changedTouches[0] : e;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchend', onUp);
+
+    const zone = document.getElementById('exchange-zone');
+    const zr = zone.getBoundingClientRect();
+    const onZone = touch.clientX > zr.left && touch.clientX < zr.right
+                && touch.clientY > zr.top && touch.clientY < zr.bottom;
+
+    ghost.remove(); ghost = null;
+    zone.classList.remove('over');
+    s1InDrag = false;
+
+    if (onZone && !s1Exchanged) {
+      doS1Exchange(el);
+    } else {
+      el.style.opacity = '1';
+    }
+  }
+
+  el.addEventListener('mousedown', onDown);
+  el.addEventListener('touchstart', onDown, { passive: false });
+}
+
+function doS1Exchange(blockEl) {
+  s1Exchanged = true;
+  blockEl.style.display = 'none';
+
+  const ex = S1_EXAMPLES[currentS1];
+  const container = document.getElementById('exchanged-tens');
+  const zone = document.getElementById('exchange-zone');
+  zone.querySelector('.zone-label').style.display = 'none';
+
+  for (let i = 0; i < 10; i++) {
+    const t = document.createElement('div');
+    t.className = 'block block-t';
+    t.style.animation = `pop 0.3s ${i * 0.05}s both`;
+    t.style.cssText += ';width:44px;height:44px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;';
+    t.textContent = '10';
+    container.appendChild(t);
+  }
+
+  // Update equation after exchange (one hundred exchanged for 10 tens)
+  const newH = ex.h - 1;
+  const newT = ex.t + 10;
+  const hDisplay = newH > 0
+    ? Array.from({length: newH}, () => '100').join(' + ')
+    : '—';
+  document.getElementById('eq-h').textContent = hDisplay;
+  document.getElementById('eq-t').textContent = newT * 10;
+  document.getElementById('eq-h').style.animation = 'pop 0.3s';
+  document.getElementById('eq-t').style.animation = 'pop 0.3s 0.1s both';
+}
+
+function resetSlide1() {
+  loadS1Example(currentS1);
+}
+
+// ══════════════════════════════════════
+//  SLIDE 2 — PLACE VALUE GRID
+// ══════════════════════════════════════
+let s2State = {
+  totalH: 2, totalT: 4, totalO: 6,
+  removedH: 0, removedT: 0, removedO: 0,
+  exchanged: false
+};
+const TARGET = { h: 0, t: 8, o: 4 };
+
+function initSlide2() {
+  buildGridDots();
+  updateS2Result();
+}
+
+function buildGridDots() {
+  buildDotColumn('h-dots', s2State.totalH, s2State.removedH, 'h-dot', '100', 'hundred');
+  buildDotColumn('t-dots', s2State.totalT, s2State.removedT, 't-dot', '10', 'ten');
+  buildDotColumn('o-dots', s2State.totalO, s2State.removedO, 'o-dot', '1', 'one');
+  
+  updateS2NeedLabels();
+  const exBtn = document.getElementById('exchange-btn');
+  exBtn.disabled = s2State.exchanged || (s2State.totalH - s2State.removedH <= 0);
+}
+
+function buildDotColumn(id, totalCount, removedCount, cls, label, type) {
+  const container = document.getElementById(id);
+  container.innerHTML = '';
+  for (let i = 0; i < totalCount; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'pv-dot ' + cls;
+    if (i < removedCount) dot.classList.add('removed');
+    dot.textContent = label;
+    dot.dataset.type = type;
+    dot.addEventListener('pointerdown', () => removeDot(dot, type));
+    container.appendChild(dot);
+  }
+}
+
+function removeDot(dot, type) {
+  if (dot.classList.contains('removed')) return;
+  if (type === 'hundred' && s2State.removedH < TARGET.h) {
+    s2State.removedH++; dot.classList.add('removed');
+  } else if (type === 'ten' && s2State.removedT < TARGET.t) {
+    s2State.removedT++; dot.classList.add('removed');
+  } else if (type === 'one' && s2State.removedO < TARGET.o) {
+    s2State.removedO++; dot.classList.add('removed');
+  }
+  updateS2NeedLabels();
+  updateS2Result();
+}
+
+function updateS2NeedLabels() {
+  document.getElementById('need-t').textContent = Math.max(0, TARGET.t - s2State.removedT);
+  document.getElementById('need-o').textContent = Math.max(0, TARGET.o - s2State.removedO);
+}
+
+function doExchange() {
+  if (s2State.exchanged || (s2State.totalH - s2State.removedH <= 0)) return;
+  s2State.exchanged = true;
+  s2State.totalH--;
+  s2State.totalT += 10;
+  buildGridDots();
+  updateS2Result();
+}
+
+function updateS2Result() {
+  const remainingH = s2State.totalH - s2State.removedH;
+  const remainingT = s2State.totalT - s2State.removedT;
+  const remainingO = s2State.totalO - s2State.removedO;
+  const remaining = (remainingH * 100) + (remainingT * 10) + remainingO;
+  
+  const el = document.getElementById('s2-answer');
+  if (!el.classList.contains('celebrate')) {
+    el.textContent = remaining;
+    el.style.color = 'var(--accent)';
+  }
+}
+
+function checkS2() {
+  const remainingH = s2State.totalH - s2State.removedH;
+  const remainingT = s2State.totalT - s2State.removedT;
+  const remainingO = s2State.totalO - s2State.removedO;
+  const remaining = (remainingH * 100) + (remainingT * 10) + remainingO;
+  const el = document.getElementById('s2-answer');
+
+  if (s2State.removedT === TARGET.t && s2State.removedO === TARGET.o) {
+    el.textContent = remaining + ' 🎉';
+    el.style.color = 'var(--o-color)';
+    el.classList.add('celebrate');
+  } else {
+    el.textContent = remaining + ' — keep removing dots!';
+    el.style.color = 'var(--accent)';
+  }
+}
+
+function resetSlide2() {
+  s2State = { totalH: 2, totalT: 4, totalO: 6, removedH: 0, removedT: 0, removedO: 0, exchanged: false };
+  buildGridDots();
+  const el = document.getElementById('s2-answer');
+  el.textContent = '?';
+  el.style.color = 'var(--accent)';
+  el.classList.remove('celebrate');
+}
+
+// ══════════════════════════════════════
+//  SLIDE 4 — SMILEY MATH
+// ══════════════════════════════════════
+let smileyTens = null, smileyOnes = null;
+let activeSlot = 'tens';
+let trialHistory = [];
+
+function selectSlot(slot) {
+  activeSlot = slot;
+  document.getElementById('ds-tens').classList.toggle('active-slot', slot === 'tens');
+  document.getElementById('ds-ones').classList.toggle('active-slot', slot === 'ones');
+}
+
+function smileyDigit(d) {
+  if (activeSlot === 'tens') {
+    smileyTens = d;
+    document.getElementById('dsv-tens').textContent = d;
+    document.getElementById('ds-tens').classList.add('filled');
+    activeSlot = 'ones';
+    selectSlot('ones');
+  } else {
+    smileyOnes = d;
+    document.getElementById('dsv-ones').textContent = d;
+    document.getElementById('ds-ones').classList.add('filled');
+    activeSlot = 'tens';
+    selectSlot('tens');
+  }
+  if (smileyTens !== null && smileyOnes !== null) {
+    const val = smileyTens * 10 + smileyOnes;
+    document.getElementById('smiley-icon').style.display = 'none';
+    document.getElementById('smiley-val').style.display = '';
+    document.getElementById('smiley-val').textContent = val;
+    document.getElementById('smiley-box').classList.add('has-value');
+  }
+}
+
+function testSmiley() {
+  if (smileyTens === null || smileyOnes === null) return;
+  const val = smileyTens * 10 + smileyOnes;
+  const result = 147 - val;
+  const display = document.getElementById('trial-display');
+  display.className = 'trial-display';
+
+  let msg = '', cls = '';
+  if (result === 63) {
+    cls = 'correct';
+    msg = `🎉 147 − ${val} = ${result} ✅ CORRECT!`;
+  } else if (result > 63) {
+    cls = 'too-big';
+    msg = `147 − ${val} = ${result} — too big! Try a LARGER number.`;
+  } else {
+    cls = 'too-small';
+    msg = `147 − ${val} = ${result} — too small! Try a SMALLER number.`;
+  }
+  display.classList.add(cls);
+  display.textContent = msg;
+  if (result === 63) display.classList.add('celebrate');
+
+  trialHistory.push({ val, result, ok: result === 63 });
+  renderTrialHistory();
+}
+
+function renderTrialHistory() {
+  const card = document.getElementById('trial-history-card');
+  const hist = document.getElementById('trial-history');
+  card.style.display = '';
+  hist.innerHTML = trialHistory.map(t =>
+    `<div style="
+      font-family:'Fredoka One',cursive;font-size:16px;padding:6px 14px;
+      border-radius:50px;background:${t.ok ? 'var(--o-color)' : '#EEE'};
+      color:${t.ok ? '#fff' : 'var(--text)'};
+    ">${t.val} → ${t.result} ${t.ok ? '✅' : '✗'}</div>`
+  ).join('');
+}
+
+function clearSmiley() {
+  smileyTens = null; smileyOnes = null;
+  document.getElementById('dsv-tens').textContent = '_';
+  document.getElementById('dsv-ones').textContent = '_';
+  document.getElementById('ds-tens').classList.remove('filled', 'active-slot');
+  document.getElementById('ds-ones').classList.remove('filled', 'active-slot');
+  document.getElementById('smiley-icon').style.display = '';
+  document.getElementById('smiley-val').style.display = 'none';
+  document.getElementById('smiley-box').classList.remove('has-value');
+  selectSlot('tens');
+}
+
+selectSlot('tens');
+
+// ══════════════════════════════════════
+//  SLIDE 5 — THINK LIKE A MATHEMATICIAN
+// ══════════════════════════════════════
+let s5Tri = null, s5Sq = null;
+let s5Picked = null;
+let s5ActiveShape = null;
+
+function s5PickDigit(d, el) {
+  document.querySelectorAll('#s5-numpad .num-tile').forEach(t => t.classList.remove('selected'));
+  s5Picked = d;
+  el.classList.add('selected');
+
+  if (s5ActiveShape) {
+    placeS5(s5ActiveShape, d);
+    el.classList.remove('selected');
+    s5Picked = null;
+  }
+}
+
+function selectShape(shape) {
+  s5ActiveShape = shape;
+  document.getElementById('tri-slot').classList.toggle('active-slot', shape === 'tri');
+  document.getElementById('sq-slot').classList.toggle('active-slot', shape === 'sq');
+
+  if (s5Picked !== null) {
+    placeS5(shape, s5Picked);
+    document.querySelectorAll('#s5-numpad .num-tile').forEach(t => t.classList.remove('selected'));
+    s5Picked = null;
+  }
+}
+
+function placeS5(shape, digit) {
+  if (shape === 'tri') {
+    s5Tri = digit;
+    document.getElementById('tri-digit').textContent = digit;
+    document.getElementById('tri-slot').classList.remove('active-slot');
+  } else {
+    s5Sq = digit;
+    document.getElementById('sq-digit').textContent = digit;
+    document.getElementById('sq-slot').classList.remove('active-slot');
+  }
+  s5ActiveShape = null;
+  autoCheckS5();
+}
+
+function autoCheckS5() {
+  if (s5Tri === null || s5Sq === null) return;
+  const num1 = 300 + s5Tri * 10 + 7;
+  const num2 = 100 + s5Sq * 10 + 7;
+  const res = num1 - num2;
+  const el = document.getElementById('s5-result');
+  el.className = 'puzzle-result';
+  if (res === 160) {
+    el.classList.add('correct');
+    el.textContent = `🎉 ${num1} − ${num2} = ${res} ✅ Brilliant!`;
+    el.classList.add('celebrate');
+    document.getElementById('s5-hint').style.display = '';
+    document.getElementById('s5-hint').textContent = `✨ Solution: △=${s5Tri}, □=${s5Sq}. Note: □ − △ = 4. Find more!`;
+  } else {
+    el.classList.add('wrong');
+    el.textContent = `${num1} − ${num2} = ${res} ✗ Not 160 — try again!`;
+    document.getElementById('s5-hint').style.display = 'none';
+  }
+}
+
+function checkS5() { autoCheckS5(); }
+
+function resetS5() {
+  s5Tri = null; s5Sq = null; s5Picked = null; s5ActiveShape = null;
+  document.getElementById('tri-digit').textContent = '△';
+  document.getElementById('sq-digit').textContent = '□';
+  document.getElementById('tri-slot').classList.remove('active-slot');
+  document.getElementById('sq-slot').classList.remove('active-slot');
+  document.querySelectorAll('#s5-numpad .num-tile').forEach(t => t.classList.remove('selected', 'used'));
+  const el = document.getElementById('s5-result');
+  el.className = 'puzzle-result empty';
+  el.textContent = 'Place both digits to check…';
+  document.getElementById('s5-hint').style.display = 'none';
+}
+
+document.getElementById('tri-slot').addEventListener('pointerdown', () => selectShape('tri'));
+document.getElementById('sq-slot').addEventListener('pointerdown', () => selectShape('sq'));
+
+// Initialize everything on boot
+buildDots();
+initSlide1();
+
+</script>
+</body>
+</html>
